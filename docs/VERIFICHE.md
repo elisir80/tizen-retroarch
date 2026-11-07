@@ -1,5 +1,7 @@
 # Verifiche iniziali
 
+[English](VALIDATION.md) | [Italiano](VERIFICHE.md)
+
 ## 7 novembre 2026 — copia per la pubblicazione
 
 - `tools/fetch-sources.sh`: scaricati i cinque repository ai commit specificati e applicate le tre patch locali.

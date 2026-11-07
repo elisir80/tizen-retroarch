@@ -1,5 +1,7 @@
 # Installazione e utilizzo
 
+[English](INSTALLATION.md) | [Italiano](INSTALLAZIONE.md)
+
 Questa procedura riguarda il progetto sorgente e un'installazione di sviluppo su Samsung TV, non il Samsung App Store. I passaggi dell'SDK possono cambiare a seconda della versione. Consulta anche la documentazione ufficiale Samsung su [TV Device](https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/tv-device.html), [certificati](https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/creating-certificates.html) e [CLI](https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/command-line-interface.html).
 
 ## 1. Prerequisiti

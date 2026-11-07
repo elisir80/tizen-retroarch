@@ -1,30 +1,30 @@
 # Tizen RetroArch
 
-Un prototipo di front-end **RetroArch/libretro per Samsung Smart TV Tizen**, realizzato come applicazione web locale con core WebAssembly. Offre una dashboard navigabile con telecomando, tastiera o controller e una libreria di giochi sulla rete domestica.
+[English](README.md) | [Italiano](README.it.md)
 
-**English:** Experimental Samsung Tizen TV frontend for RetroArch/libretro WebAssembly cores. This source-only repository includes build scripts, local patches, a LAN ROM server and an Italian installation guide.
+An experimental **RetroArch/libretro frontend for Samsung Smart TVs running Tizen**, built as a local web application with WebAssembly cores. It provides a dashboard navigable with a remote, keyboard, or controller, plus a home-network game library.
 
-> Progetto sperimentale, non ufficiale e non affiliato a Samsung o al team RetroArch. La versione di partenza è stata provata su Samsung UE65DU7172; compatibilità, prestazioni e controller variano fra TV e giochi. Non è un port nativo: il codice WebAssembly viene eseguito dal motore web della TV.
+> This is an unofficial experimental project, not affiliated with Samsung or the RetroArch team. The original development version was tested on a Samsung UE65DU7172; compatibility, performance, and controller behavior vary by TV and game. This is not a native port: the TV's web engine executes the WebAssembly code.
 
-![Dashboard dell'applicazione](docs/screenshots/dashboard.png)
+![Application dashboard](docs/screenshots/dashboard.png)
 
-## Funzioni
+## Features
 
-- Nintendo NES con FCEUmm; Super Nintendo con Snes9x 2005/2005 Plus e fallback 2010; Commodore 64 con VICE x64.
-- Apertura di file locali e navigazione di cartelle e sottocartelle tramite server ROM sulla rete locale.
-- Modalità C64 BASIC, tastiera virtuale e salvataggio/ripristino della sessione nell'archivio dell'app sulla TV.
-- AudioWorklet e core ottimizzati quando la TV supporta le funzionalità necessarie; percorso audio di compatibilità negli altri casi.
-- Modalità schermo intero, menu in gioco, profili di prestazioni SNES/C64 e configurazione Start/Select del controller.
+- Nintendo NES with FCEUmm; Super Nintendo with Snes9x 2005/2005 Plus and a Snes9x 2010 fallback; Commodore 64 with VICE x64.
+- Open local files or browse folders and subfolders through a ROM server on the local network.
+- C64 BASIC mode, a virtual keyboard, and session save/restore in the TV app's local storage.
+- AudioWorklet and optimized cores when the TV supports the required features, with a compatibility audio path otherwise.
+- Fullscreen, an in-game menu, SNES/C64 performance profiles, and controller Start/Select configuration.
 
-![Impostazioni server e controller](docs/screenshots/settings.png)
+![Server and controller settings](docs/screenshots/settings.png)
 
-Gli screenshot mostrano l'interfaccia nell'anteprima desktop; non contengono immagini di giochi commerciali. Nintendo 64 e PlayStation non sono supportati in questa versione.
+The screenshots show the interface in the desktop preview and do not contain commercial game imagery. The current application interface and screenshots are in Italian. Nintendo 64 and PlayStation are not supported in this version.
 
-## Prima di iniziare
+## Before you begin
 
-Questo repository contiene il front-end, gli script di compilazione e le modifiche ai sorgenti upstream. **Non contiene core WebAssembly precompilati, pacchetti WGT firmati, giochi, certificati o chiavi.** Per installarlo occorre compilare i core e firmare il pacchetto con il proprio certificato Samsung. La guida completa è [Installazione e utilizzo](docs/INSTALLAZIONE.md).
+This repository contains the frontend, build scripts, and modifications to upstream sources. **It does not include precompiled WebAssembly cores, signed WGT packages, games, certificates, or keys.** To install it, build the cores and sign the package with your own Samsung certificate. See the complete [installation and usage guide](docs/INSTALLATION.md).
 
-Servono Git, Python 3, `make`, `rsync`, due versioni di Emscripten e Tizen Studio o Tizen Extension con gli strumenti Samsung TV. Gli script di compilazione sono in Bash e sono stati preparati su macOS; su altri sistemi potrebbero richiedere adattamenti. La compilazione scarica sorgenti da progetti di terze parti: leggi prima [Licenze e contenuti](LICENSES.md).
+You need Git, Python 3, `make`, `rsync`, two Emscripten versions, and Tizen Studio or Tizen Extension with Samsung TV tools. The Bash build scripts were prepared on macOS and may need adjustments on other systems. Building downloads third-party sources; first read [Licenses and third-party content](LICENSES.md).
 
 ```sh
 git clone https://github.com/elisir80/tizen-retroarch.git
@@ -42,36 +42,36 @@ bash tools/build-compat.sh
 bash tools/build-audioworklet.sh all
 ```
 
-Poi crea un profilo certificato Samsung TV e collega la TV in Developer Mode. Con `tz` disponibile nel `PATH`, genera il WGT con:
+Then create a Samsung TV certificate profile and connect the TV in Developer Mode. With `tz` available on `PATH`, create the WGT:
 
 ```sh
-bash tools/package-tv.sh 'NOME_PROFILO_CERTIFICATO'
+bash tools/package-tv.sh 'YOUR_CERTIFICATE_PROFILE_NAME'
 ```
 
-Il file è `build/RetroArch.wgt`. Per collegamento, installazione, avvio, prove e risoluzione dei problemi consulta la [guida dettagliata](docs/INSTALLAZIONE.md). **Non pubblicare il WGT firmato o il certificato personale.**
+The resulting file is `build/RetroArch.wgt`. For connection, installation, launch, testing, and troubleshooting, follow the [detailed guide](docs/INSTALLATION.md). **Do not publish your personally signed WGT or certificate.**
 
-## Server ROM sulla rete locale
+## Local network ROM server
 
-Sul computer, scegli una cartella contenente solo i file che vuoi condividere:
+On your computer, choose a folder containing only files you want to share:
 
 ```sh
 python3 rom_server.py --folder "$HOME/ROMs" --port 8766
 ```
 
-Crea prima la cartella se non esiste. Il programma mostra un indirizzo da inserire in **Impostazioni → Indirizzo del computer** sulla TV; premi **Salva e verifica**, poi apri **ROM di rete**. Se il computer usa Wi-Fi ed Ethernet, controlla che l'indirizzo visualizzato corrisponda all'interfaccia raggiungibile dalla TV.
+Create the folder first if necessary. Enter the address printed by the server in the TV app under **Impostazioni → Indirizzo del computer** (Settings → Computer address), select **SALVA E VERIFICA** (Save and verify), then open **ROM di rete** (Network ROMs). If the computer uses both Wi-Fi and Ethernet, make sure the displayed address belongs to the interface reachable from the TV.
 
-Il server è progettato per reti fidate: ascolta su tutte le interfacce, **non ha autenticazione né cifratura**, e condivide i file di gioco supportati nella cartella scelta e nelle sottocartelle. Non esporre la porta a Internet, non usare una cartella con file privati e fermalo con `Ctrl+C` quando non serve. La TV scarica il gioco prima dell'esecuzione.
+The server is intended for trusted networks: it listens on all interfaces, **has no authentication or encryption**, and shares supported game files in the selected folder and its subfolders. Do not expose the port to the Internet or use a folder containing private files. Stop the server with `Ctrl+C` when finished. The TV downloads a game before running it.
 
-## Stato e limitazioni
+## Status and limitations
 
-- Il progetto è stato provato su una TV Samsung; non è una garanzia per altri modelli, firmware, ROM o periferiche.
-- I core ricompilati da questo repository sono stati avviati in anteprima desktop per il test NES; il nuovo WGT non è stato ancora installato e verificato su una TV.
-- L'audio e la fluidità dipendono dal core e dal gioco. I profili SNES/C64 offrono compromessi diversi.
-- Alcuni adattatori USB potrebbero non trasmettere tutti i pulsanti. In quel caso è possibile assegnare Start/Select a pulsanti riconosciuti; un test con DualShock 4 Bluetooth è ancora da confermare.
-- La modalità BASIC e i salvataggi dipendono dai dati locali dell'app. Disinstallare l'app può cancellarli.
-- Lo scopo è la ricerca e l'uso personale con software homebrew o contenuti per cui si possiedono i diritti necessari. BIOS/firmware e contenuti di terze parti possono avere licenze distinte.
+- The project has been tested on one Samsung TV; this does not guarantee compatibility with other models, firmware, ROMs, or peripherals.
+- The cores rebuilt from this repository were used for a desktop NES preview smoke test; the new WGT has not yet been installed or tested on a TV.
+- Audio and smoothness depend on the core and game. SNES/C64 profiles provide different trade-offs.
+- Some USB adapters may not transmit every button. Start/Select can be assigned to recognized buttons; testing with a Bluetooth DualShock 4 remains outstanding.
+- BASIC mode and save states depend on the app's local data. Uninstalling the app can erase them.
+- The project is intended for research and personal use with homebrew software or content for which you have the necessary rights. Third-party BIOS, firmware, and content may have separate licenses.
 
-## Verifiche per sviluppatori
+## Developer checks
 
 ```sh
 node --check main.js
@@ -82,6 +82,6 @@ xmllint --noout config.xml
 python3 tools/preview_server.py
 ```
 
-Apri `http://127.0.0.1:8765/` sullo stesso computer. L'anteprima prova l'interfaccia nel browser desktop; non sostituisce i test su TV, audio e controller fisici. I core funzionano solo dopo la compilazione.
+Open `http://127.0.0.1:8765/` on the same computer. The preview tests the interface in a desktop browser; it does not replace testing on a TV with real audio and controllers. Cores are available only after compilation.
 
-Le modifiche a RetroArch, FCEUmm e VICE sono in [`patches/`](patches/); versioni e URL esatti sono in [`tools/fetch-sources.sh`](tools/fetch-sources.sh). I componenti conservano le loro licenze e condizioni: vedi [LICENSES.md](LICENSES.md). I dettagli delle verifiche iniziali sono in [docs/VERIFICHE.md](docs/VERIFICHE.md).
+RetroArch, FCEUmm, and VICE changes are in [`patches/`](patches/); exact versions and URLs are in [`tools/fetch-sources.sh`](tools/fetch-sources.sh). Components retain their own licenses and conditions: see [LICENSES.md](LICENSES.md). The initial verification record is in [docs/VALIDATION.md](docs/VALIDATION.md).

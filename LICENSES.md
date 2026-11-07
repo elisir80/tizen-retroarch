@@ -1,12 +1,14 @@
-# Licenze e contenuti di terze parti
+# Licenses and third-party content
 
-Il repository pubblica una dashboard originale, script di build e patch per progetti indipendenti. La visibilità pubblica su GitHub non assegna automaticamente una licenza ai file originali di questo repository: il titolare del progetto non ne ha ancora indicata una. Le patch a componenti di terze parti rimangono soggette ai termini applicabili ai rispettivi componenti; nessuna licenza di questo repository sostituisce le loro condizioni.
+[English](LICENSES.md) | [Italiano](LICENSES.it.md)
 
-Le sorgenti upstream non sono incluse nella copia pubblicata: `tools/fetch-sources.sh` le scarica ai commit indicati e applica le patch locali. Esamina le licenze effettive nei rispettivi checkout prima di compilare o distribuire:
+This repository publishes an original dashboard, build scripts, and patches for independent projects. Public visibility on GitHub does not automatically grant a license for the original files in this repository: the project owner has not yet specified one. Patches to third-party components remain subject to the terms applicable to those components; no license in this repository replaces their conditions.
 
-- [RetroArch](https://github.com/libretro/RetroArch), licenza e copyright nel checkout. Una copia del suo file GPL è inclusa come [COPYING.RetroArch](COPYING.RetroArch); non va interpretata come licenza unica di tutte le dipendenze.
-- [FCEUmm](https://github.com/libretro/libretro-fceumm), licenza e avvisi nei file sorgente e nel README upstream.
-- [Snes9x 2005](https://github.com/libretro/snes9x2005) e [Snes9x 2010](https://github.com/libretro/snes9x2010), con condizioni proprie: in particolare verificare gli avvisi sull'uso non commerciale e le condizioni delle librerie incluse. Non presumere che siano coperti dalle stesse condizioni di RetroArch.
-- [VICE libretro](https://github.com/libretro/vice-libretro): software e dati/firmware possono avere titolari e condizioni differenti. L'upstream include avvisi di copyright specifici per alcune ROM di sistema Commodore: consultarli prima di utilizzare o ridistribuire tali file.
+Upstream sources are not included in the published copy: `tools/fetch-sources.sh` downloads them at the specified commits and applies the local patches. Review the actual licenses in each checkout before building or distributing:
 
-Non sono forniti file di giochi, BIOS o firmware separati, certificati, chiavi, WGT o core compilati. La procedura di compilazione può scaricare e incorporare materiali presenti nei progetti upstream: la disponibilità pubblica di una sorgente non è di per sé una concessione generale a ridistribuirne tutti i contenuti. Chi compila o pubblica binari deve verificare le licenze di tutti i componenti, anche quando sono collegati fra loro. Il progetto non è affiliato ai rispettivi titolari dei marchi.
+- [RetroArch](https://github.com/libretro/RetroArch): license and copyright notices are in its checkout. A copy of its GPL file is included as [COPYING.RetroArch](COPYING.RetroArch); it should not be interpreted as a single license for every dependency.
+- [FCEUmm](https://github.com/libretro/libretro-fceumm): see the license and notices in the upstream source files and README.
+- [Snes9x 2005](https://github.com/libretro/snes9x2005) and [Snes9x 2010](https://github.com/libretro/snes9x2010) have their own conditions. In particular, check the non-commercial-use notices and the terms of included libraries. Do not assume they have the same conditions as RetroArch.
+- [VICE libretro](https://github.com/libretro/vice-libretro): software and data/firmware can have different owners and terms. Upstream includes specific copyright notices for certain Commodore system ROMs; review them before using or redistributing those files.
+
+No game files, separate BIOS or firmware, certificates, keys, WGT packages, or compiled cores are provided. Building may download and incorporate materials present in upstream projects: public availability of source does not by itself grant a general right to redistribute all of its contents. Anyone compiling or publishing binaries must check the licenses of all components, including when linked together. This project is not affiliated with the respective trademark owners.
