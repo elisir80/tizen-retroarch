@@ -26,6 +26,12 @@ trust_anchor: []
 # Files and resources in the web project
 files:
   - README.md
+  - LICENSE
+  - COPYING.RetroArch
+  - LICENSES.md
+  - LICENSES.it.md
+  - docs/LEGAL.md
+  - docs/ASPETTI-LEGALI.md
   - index.html
   - main.js
   - joypad-input.js

@@ -6,6 +6,8 @@ Un prototipo di front-end **RetroArch/libretro per Samsung Smart TV Tizen**, rea
 
 > Progetto sperimentale, non ufficiale e non affiliato a Samsung o al team RetroArch. La versione di partenza è stata provata su Samsung UE65DU7172; compatibilità, prestazioni e controller variano fra TV e giochi. Non è un port nativo: il codice WebAssembly viene eseguito dal motore web della TV.
 
+> **Distribuzione:** la build collega RetroArch ai singoli core. Le condizioni non commerciali di Snes9x, le licenze degli altri core e i firmware incorporati richiedono una verifica di compatibilità e diritti prima di distribuire moduli compilati o pacchetti WGT. Vedi la [guida legale](docs/ASPETTI-LEGALI.md).
+
 ![Dashboard dell'applicazione](docs/screenshots/dashboard.png)
 
 ## Funzioni
@@ -84,4 +86,4 @@ python3 tools/preview_server.py
 
 Apri `http://127.0.0.1:8765/` sullo stesso computer. L'anteprima prova l'interfaccia nel browser desktop; non sostituisce i test su TV, audio e controller fisici. I core funzionano solo dopo la compilazione.
 
-Le modifiche a RetroArch, FCEUmm e VICE sono in [`patches/`](patches/); versioni e URL esatti sono in [`tools/fetch-sources.sh`](tools/fetch-sources.sh). I componenti conservano le loro licenze e condizioni: vedi [LICENSES.it.md](LICENSES.it.md). I dettagli delle verifiche iniziali sono in [docs/VERIFICHE.md](docs/VERIFICHE.md).
+Il codice originale del progetto è sotto [GPL-3.0-or-later](LICENSE), nell'ambito definito in [LICENSES.it.md](LICENSES.it.md). Le modifiche a RetroArch, FCEUmm e VICE sono in [`patches/`](patches/) e mantengono le condizioni upstream applicabili; versioni e URL esatti sono in [`tools/fetch-sources.sh`](tools/fetch-sources.sh). Prima di distribuire una build consulta la [guida legale](docs/ASPETTI-LEGALI.md). I dettagli delle verifiche iniziali sono in [docs/VERIFICHE.md](docs/VERIFICHE.md).

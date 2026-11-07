@@ -6,6 +6,8 @@ These instructions cover the source project and a development installation on a 
 
 The current application interface is in Italian. The original on-screen labels are included below alongside their English meanings.
 
+These instructions build a local package; they do **not** establish permission to distribute it. RetroArch/core linking and embedded firmware need review before public or other distribution. See the [legal guide](LEGAL.md).
+
 ## 1. Prerequisites
 
 - A Samsung Smart TV with Developer Mode, and a computer and TV reachable on the same network.

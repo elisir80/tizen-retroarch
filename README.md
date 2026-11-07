@@ -6,6 +6,8 @@ An experimental **RetroArch/libretro frontend for Samsung Smart TVs running Tize
 
 > This is an unofficial experimental project, not affiliated with Samsung or the RetroArch team. The original development version was tested on a Samsung UE65DU7172; compatibility, performance, and controller behavior vary by TV and game. This is not a native port: the TV's web engine executes the WebAssembly code.
 
+> **Distribution:** the build links RetroArch with individual cores. Snes9x's non-commercial terms, other core licenses, and embedded firmware require compatibility and rights review before distributing compiled modules or WGT packages. See the [legal guide](docs/LEGAL.md).
+
 ![Application dashboard](docs/screenshots/dashboard.png)
 
 ## Features
@@ -84,4 +86,4 @@ python3 tools/preview_server.py
 
 Open `http://127.0.0.1:8765/` on the same computer. The preview tests the interface in a desktop browser; it does not replace testing on a TV with real audio and controllers. Cores are available only after compilation.
 
-RetroArch, FCEUmm, and VICE changes are in [`patches/`](patches/); exact versions and URLs are in [`tools/fetch-sources.sh`](tools/fetch-sources.sh). Components retain their own licenses and conditions: see [LICENSES.md](LICENSES.md). The initial verification record is in [docs/VALIDATION.md](docs/VALIDATION.md).
+Original project code is licensed under [GPL-3.0-or-later](LICENSE), within the scope specified in [LICENSES.md](LICENSES.md). RetroArch, FCEUmm, and VICE changes are in [`patches/`](patches/) and remain subject to applicable upstream terms; exact versions and URLs are in [`tools/fetch-sources.sh`](tools/fetch-sources.sh). See the [legal guide](docs/LEGAL.md) before distributing a build. The initial verification record is in [docs/VALIDATION.md](docs/VALIDATION.md).

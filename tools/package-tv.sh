@@ -17,8 +17,9 @@ for name in fceumm snes9x2010 snes9x2005 snes9x2005_plus vice_x64 vice_x64_fast;
   done
 done
 stage="$project_dir/build/wgt"
-mkdir -p "$stage/wasm"
-cp "$project_dir"/{README.md,config.xml,index.html,joypad-input.js,main.js,style.css,icon.png,tizen_web_project.yaml} "$stage/"
+mkdir -p "$stage/wasm" "$stage/docs"
+cp "$project_dir"/{README.md,LICENSE,COPYING.RetroArch,LICENSES.md,LICENSES.it.md,config.xml,index.html,joypad-input.js,main.js,style.css,icon.png,tizen_web_project.yaml} "$stage/"
+cp "$project_dir"/docs/{LEGAL.md,ASPETTI-LEGALI.md} "$stage/docs/"
 rsync -a "$project_dir/wasm/" "$stage/wasm/"
 tz pack "$stage" -t wgt -s "$1"
 cp "$stage/Debug/wgt.wgt" "$project_dir/build/RetroArch.wgt"
