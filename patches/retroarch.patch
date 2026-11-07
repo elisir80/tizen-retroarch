@@ -1,0 +1,393 @@
+diff --git a/Makefile.emscripten b/Makefile.emscripten
+index c0a9d9a..49fc7af 100644
+--- a/Makefile.emscripten
++++ b/Makefile.emscripten
+@@ -141,10 +141,11 @@ INITIAL_HEAP ?= 134217728
+ 
+ OBJDIR := obj-emscripten
+ 
+-EXPORTED_FUNCTIONS = _main,_malloc,_free,_cmd_savefiles,_cmd_save_state,_cmd_load_state,_cmd_undo_save_state,_cmd_undo_load_state,_cmd_toggle_fullscreen,_cmd_take_screenshot,\
++EXPORTED_FUNCTIONS = _main,_malloc,_free,_cmd_savefiles,_cmd_save_state,_cmd_load_state,_cmd_start_core,_cmd_undo_save_state,_cmd_undo_load_state,_cmd_toggle_fullscreen,_cmd_take_screenshot,\
+ _cmd_toggle_menu,_cmd_reload_config,_cmd_toggle_grab_mouse,_cmd_toggle_game_focus,_cmd_reset,_cmd_toggle_pause,_cmd_pause,_cmd_unpause,\
+ _cmd_set_volume,_cmd_set_shader,_cmd_cheat_set_code,_cmd_cheat_get_code,_cmd_cheat_toggle_index,_cmd_cheat_get_code_state,_cmd_cheat_realloc,\
+ _cmd_cheat_get_size,_cmd_cheat_apply_cheats,EmscriptenSendCommand,EmscriptenReceiveCommandReply
++EXPORTED_FUNCTIONS := $(EXPORTED_FUNCTIONS)$(EXTRA_EXPORTED_FUNCTIONS)
+ 
+ EXPORTS := callMain,FS,PATH,ERRNO_CODES,ENV,stringToNewUTF8,UTF8ToString,Browser,EmscriptenSendCommand,EmscriptenReceiveCommandReply
+ 
+diff --git a/audio/drivers/rwebaudio.c b/audio/drivers/rwebaudio.c
+index 6f43663..3c71955 100644
+--- a/audio/drivers/rwebaudio.c
++++ b/audio/drivers/rwebaudio.c
+@@ -25,7 +25,11 @@
+ #include "../../verbosity.h"
+ #include "../../frontend/drivers/platform_emscripten.h"
+ 
+-#define RWEBAUDIO_BUFFER_SIZE_MS 10
++/* Smart-TV WebAudio implementations have appreciably higher scheduling
++ * overhead than desktop browsers.  Twenty millisecond blocks halve the
++ * number of AudioBufferSourceNodes created per second while remaining below
++ * two 60 Hz video frames, preventing the small gaps heard as crackling. */
++#define RWEBAUDIO_BUFFER_SIZE_MS 20
+ 
+ /* forward declarations */
+ unsigned RWebAudioSampleRate(void);
+diff --git a/emscripten/library_rwebaudio.js b/emscripten/library_rwebaudio.js
+index d97bfea..da36c4d 100644
+--- a/emscripten/library_rwebaudio.js
++++ b/emscripten/library_rwebaudio.js
+@@ -2,11 +2,11 @@
+ 
+ var LibraryRWebAudio = {
+    $RWA: {
+-      /* add 10 ms of silence on start, seems to prevent underrun on start/unpausing (terrible crackling in firefox) */
+-      MIN_START_OFFSET_SEC: 0.01,
++      /* Smart-TV browser schedulers need more lead time than desktop. */
++      MIN_START_OFFSET_SEC: 0.03,
+       /* firefox and safari need more latency (transparent to audio driver) */
+       EXTRA_LATENCY_SEC_NONCHROME: 0.01,
+-      EXTRA_LATENCY_SEC_CHROME: 0,
++      EXTRA_LATENCY_SEC_CHROME: 0.02,
+       PLATFORM_EMSCRIPTEN_BROWSER_CHROMIUM: 1,
+       context: null,
+       contextRunning: false,
+diff --git a/frontend/drivers/platform_emscripten.c b/frontend/drivers/platform_emscripten.c
+index 5d2e651..fc825a2 100644
+--- a/frontend/drivers/platform_emscripten.c
++++ b/frontend/drivers/platform_emscripten.c
+@@ -52,6 +52,7 @@
+ #include "../../retroarch.h"
+ #include "../../verbosity.h"
+ #include "../../tasks/tasks_internal.h"
++#include "../../tasks/task_content.h"
+ #include "../../cheat_manager.h"
+ #include "../../audio/audio_driver.h"
+ #include "../../gfx/common/gl_common.h"
+@@ -160,6 +161,13 @@ void cmd_load_state(void)
+    command_event(CMD_EVENT_LOAD_STATE, NULL);
+ }
+ 
++void cmd_start_core(void)
++{
++   content_ctx_info_t content_info = {0};
++   path_clear(RARCH_PATH_BASENAME);
++   task_push_start_current_core(&content_info);
++}
++
+ void cmd_undo_save_state(void)
+ {
+    command_event(CMD_EVENT_UNDO_SAVE_STATE, NULL);
+diff --git a/input/drivers/rwebinput_input.c b/input/drivers/rwebinput_input.c
+index 27da002..8aaee02 100644
+--- a/input/drivers/rwebinput_input.c
++++ b/input/drivers/rwebinput_input.c
+@@ -45,6 +45,9 @@
+ #define RWEBINPUT_MOUSE_BTN5 4
+ 
+ #define MAX_TOUCH 32
++#define RWEBINPUT_MAX_GAMEPADS 4
++#define RWEBINPUT_GAMEPAD_BUTTONS 16
++#define RWEBINPUT_GAMEPAD_DEADZONE 0.35
+ 
+ typedef struct rwebinput_key_to_code_map_entry
+ {
+@@ -102,8 +105,18 @@ typedef struct rwebinput_input
+    unsigned pointer_count;
+    bool keys[RETROK_LAST];
+    bool pointerlock_active;
++   EmscriptenGamepadEvent gamepads[RWEBINPUT_MAX_GAMEPADS];
+ } rwebinput_input_t;
+ 
++/* Direct fallback for TV browser keys whose KeyboardEvent metadata is
++ * incomplete. The web application uses this only for C64 BASIC Return. */
++EMSCRIPTEN_KEEPALIVE void rwebinput_inject_keyboard_event(
++      int down, unsigned keycode, uint32_t character, uint16_t mod)
++{
++   input_keyboard_event(down != 0, keycode, character, mod,
++      RETRO_DEVICE_KEYBOARD);
++}
++
+ /* KeyboardEvent.keyCode has been deprecated for a while and doesn't have
+  * separate left/right modifier codes, so we have to map string labels from
+  * KeyboardEvent.code to retro keys */
+@@ -148,6 +161,7 @@ static const rwebinput_key_to_code_map_entry_t rwebinput_key_to_code_map[] =
+    { "Home", RETROK_HOME },
+    { "ShiftRight", RETROK_RSHIFT },
+    { "ShiftLeft", RETROK_LSHIFT },
++   { "Shift", RETROK_RSHIFT },
+    { "ControlLeft", RETROK_LCTRL },
+    { "AltLeft", RETROK_LALT },
+    { "Space", RETROK_SPACE },
+@@ -458,7 +472,10 @@ static void *rwebinput_input_init(const char *joypad_driver)
+ 
+    input_keymaps_init_keyboard_lut(rarch_key_map_rwebinput);
+ 
+-   r = emscripten_set_keydown_callback("#canvas", rwebinput, false,
++   /* Keyboard/remote events are delivered to the document by TV browsers;
++    * using the canvas as target makes virtual and remote controls focus-
++    * dependent. Mouse/touch remain canvas-scoped below. */
++   r = emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, rwebinput, false,
+          rwebinput_keyboard_cb);
+    if (r != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+@@ -466,7 +483,7 @@ static void *rwebinput_input_init(const char *joypad_driver)
+          "[EMSCRIPTEN/INPUT] Failed to create keydown callback: %d.\n", r);
+    }
+ 
+-   r = emscripten_set_keyup_callback("#canvas", rwebinput, false,
++   r = emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, rwebinput, false,
+          rwebinput_keyboard_cb);
+    if (r != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+@@ -474,7 +491,7 @@ static void *rwebinput_input_init(const char *joypad_driver)
+          "[EMSCRIPTEN/INPUT] Failed to create keyup callback: %d.\n", r);
+    }
+ 
+-   r = emscripten_set_keypress_callback("#canvas", rwebinput, false,
++   r = emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, rwebinput, false,
+          rwebinput_keyboard_cb);
+    if (r != EMSCRIPTEN_RESULT_SUCCESS)
+    {
+@@ -599,6 +616,115 @@ static int16_t rwebinput_mouse_state(
+    return 0;
+ }
+ 
++/* Browser Gamepad API buttons follow the W3C "standard" mapping for
++ * recognized USB/Bluetooth pads (DualShock, Xbox and most HID pads). Keep
++ * the fallback indices as well: some TV browsers report the same physical
++ * controls without setting mapping="standard". */
++static bool rwebinput_gamepad_button(
++      const EmscriptenGamepadEvent *gamepad, unsigned button)
++{
++   if (!gamepad || button >= (unsigned)gamepad->numButtons || button >= 64)
++      return false;
++
++   return gamepad->digitalButton[button]
++      || gamepad->analogButton[button] >= 0.5;
++}
++
++static bool rwebinput_gamepad_axis(
++      const EmscriptenGamepadEvent *gamepad, unsigned axis, double direction)
++{
++   double value;
++
++   if (!gamepad || axis >= (unsigned)gamepad->numAxes || axis >= 64)
++      return false;
++
++   value = gamepad->axis[axis];
++   return direction < 0.0
++      ? value < -RWEBINPUT_GAMEPAD_DEADZONE
++      : value > RWEBINPUT_GAMEPAD_DEADZONE;
++}
++
++static bool rwebinput_gamepad_dpad(
++      const EmscriptenGamepadEvent *gamepad, unsigned id)
++{
++   unsigned dpad_button = 12 + (id - RETRO_DEVICE_ID_JOYPAD_UP);
++   unsigned axis       = id <= RETRO_DEVICE_ID_JOYPAD_DOWN ? 1 : 0;
++   double direction    = (id == RETRO_DEVICE_ID_JOYPAD_UP ||
++         id == RETRO_DEVICE_ID_JOYPAD_LEFT) ? -1.0 : 1.0;
++
++   return rwebinput_gamepad_button(gamepad, dpad_button)
++      || rwebinput_gamepad_axis(gamepad, axis, direction);
++}
++
++static bool rwebinput_gamepad_button_for_retro(
++      const EmscriptenGamepadEvent *gamepad, unsigned id)
++{
++   static const unsigned standard_buttons[RWEBINPUT_GAMEPAD_BUTTONS] = {
++      0, 2, 8, 9, 12, 13, 14, 15, 1, 3, 4, 5, 6, 7, 10, 11
++   };
++
++   if (id >= RWEBINPUT_GAMEPAD_BUTTONS)
++      return false;
++   if (id >= RETRO_DEVICE_ID_JOYPAD_UP &&
++       id <= RETRO_DEVICE_ID_JOYPAD_RIGHT)
++      return rwebinput_gamepad_dpad(gamepad, id);
++
++   /* A number of TV browsers expose simple USB pads with only eight
++    * buttons. In that layout Select/Start are reported as buttons 6/7,
++    * while the browser-standard layout reports them as 8/9. Keep the
++    * standard mapping first and use the 6/7 fallback only for Select/Start
++    * on non-standard or short mappings. This avoids making shoulder
++    * buttons aliases on normal 12/16-button pads. */
++   if (id == RETRO_DEVICE_ID_JOYPAD_SELECT ||
++       id == RETRO_DEVICE_ID_JOYPAD_START)
++   {
++      unsigned standard = standard_buttons[id];
++      unsigned fallback = id == RETRO_DEVICE_ID_JOYPAD_SELECT ? 6 : 7;
++      bool nonstandard = strcmp((const char*)gamepad->mapping, "standard") != 0;
++
++      if (rwebinput_gamepad_button(gamepad, standard))
++         return true;
++      if ((nonstandard || gamepad->numButtons <= 8) &&
++          rwebinput_gamepad_button(gamepad, fallback))
++         return true;
++      return false;
++   }
++
++   return rwebinput_gamepad_button(gamepad, standard_buttons[id]);
++}
++
++static const EmscriptenGamepadEvent *rwebinput_gamepad_for_port(
++      const rwebinput_input_t *rwebinput, unsigned port)
++{
++   if (!rwebinput || port >= RWEBINPUT_MAX_GAMEPADS ||
++       !rwebinput->gamepads[port].connected)
++      return NULL;
++   return &rwebinput->gamepads[port];
++}
++
++static void rwebinput_gamepad_poll(rwebinput_input_t *rwebinput)
++{
++   int count;
++   int index;
++
++   memset(rwebinput->gamepads, 0, sizeof(rwebinput->gamepads));
++
++   /* This call refreshes the browser's Gamepad snapshot. On TV browsers
++    * without Gamepad API support it returns an error; keyboard/remote input
++    * continues normally in that case. */
++   if (emscripten_sample_gamepad_data() != EMSCRIPTEN_RESULT_SUCCESS)
++      return;
++
++   count = emscripten_get_num_gamepads();
++   count = MIN(count, RWEBINPUT_MAX_GAMEPADS);
++   for (index = 0; index < count; index++)
++   {
++      EmscriptenGamepadEvent *gamepad = &rwebinput->gamepads[index];
++      if (emscripten_get_gamepad_status(index, gamepad) != EMSCRIPTEN_RESULT_SUCCESS)
++         memset(gamepad, 0, sizeof(*gamepad));
++   }
++}
++
+ /* Which of @keys are down: bit n of @down for keys[n]. A key bound to
+  * a stick's direction does not count while the keyboard is the core's
+  * (Game Focus) - this driver's own rule, kept. */
+@@ -608,16 +734,33 @@ static void rwebinput_keys_down(void *data, unsigned port,
+ {
+    unsigned i;
+    rwebinput_input_t *rwebinput = (rwebinput_input_t*)data;
++   const EmscriptenGamepadEvent *gamepad =
++      rwebinput_gamepad_for_port(rwebinput, port);
+    bool blocked                 = input_driver_keyboard_mapping_blocked();
+-   (void)port;
+    for (i = 0; i < count; i++)
+    {
+-      if (     blocked
+-            && bind[i] >= RARCH_ANALOG_LEFT_X_PLUS
+-            && bind[i] <= RARCH_ANALOG_RIGHT_Y_MINUS)
+-         continue;
+-      if (rwebinput_key_pressed(rwebinput, keys[i]))
++      bool analog_bind = bind[i] >= RARCH_ANALOG_LEFT_X_PLUS &&
++         bind[i] <= RARCH_ANALOG_RIGHT_Y_MINUS;
++
++      if ((!blocked || !analog_bind) && rwebinput_key_pressed(rwebinput, keys[i]))
+          down[i >> 5] |= (1u << (i & 31));
++
++      /* input_port_keys_refresh() routes keyboard-backed RetroPad binds
++       * through this callback. Add the browser pad to that same bitset so
++       * the normal RetroArch input path combines keyboard and controller
++       * input without requiring a platform-specific joypad driver. */
++      if (gamepad && bind[i] < RWEBINPUT_GAMEPAD_BUTTONS &&
++          rwebinput_gamepad_button_for_retro(gamepad, bind[i]))
++         down[i >> 5] |= (1u << (i & 31));
++
++      if (gamepad && analog_bind)
++      {
++         unsigned axis = (bind[i] - RARCH_ANALOG_LEFT_X_PLUS) >> 1;
++         double direction = ((bind[i] - RARCH_ANALOG_LEFT_X_PLUS) & 1)
++            ? -1.0 : 1.0;
++         if (rwebinput_gamepad_axis(gamepad, axis, direction))
++            down[i >> 5] |= (1u << (i & 31));
++      }
+    }
+ }
+ 
+@@ -666,9 +809,41 @@ static int16_t rwebinput_input_state(
+       unsigned id)
+ {
+    rwebinput_input_t *rwebinput = (rwebinput_input_t*)data;
++   const EmscriptenGamepadEvent *gamepad;
+ 
+    switch (device)
+    {
++      case RETRO_DEVICE_JOYPAD:
++         gamepad = rwebinput_gamepad_for_port(rwebinput, port);
++         if (!gamepad)
++            return 0;
++         if (id == RETRO_DEVICE_ID_JOYPAD_MASK)
++         {
++            unsigned button;
++            unsigned mask = 0;
++            for (button = 0; button < RWEBINPUT_GAMEPAD_BUTTONS; button++)
++               if (rwebinput_gamepad_button_for_retro(gamepad, button))
++                  mask |= 1u << button;
++            return (int16_t)mask;
++         }
++         if (id < RWEBINPUT_GAMEPAD_BUTTONS)
++            return rwebinput_gamepad_button_for_retro(gamepad, id);
++         break;
++      case RETRO_DEVICE_ANALOG:
++         gamepad = rwebinput_gamepad_for_port(rwebinput, port);
++         if (!gamepad || idx > RETRO_DEVICE_INDEX_ANALOG_RIGHT ||
++             id > RETRO_DEVICE_ID_ANALOG_Y || idx >= (unsigned)gamepad->numAxes)
++            return 0;
++         {
++            unsigned axis = idx * 2 + id;
++            double value = axis < 64 ? gamepad->axis[axis] : 0.0;
++            if (value > 1.0) value = 1.0;
++            if (value < -1.0) value = -1.0;
++            if (value > -RWEBINPUT_GAMEPAD_DEADZONE &&
++                value < RWEBINPUT_GAMEPAD_DEADZONE)
++               value = 0.0;
++            return (int16_t)(value * 32767.0);
++         }
+       /* The RetroPad's buttons, the hotkeys and a stick's axes, where
+        * they are bound to keys or mouse buttons, are the frontend's to
+        * answer: it asks rwebinput_keys_down() for the keys once a poll. */
+@@ -859,10 +1034,33 @@ static void rwebinput_process_keyboard_events(
+    if (key_event->metaKey)
+       mod |= RETROKMOD_META;
+ 
+-   keycode = encoding_crc32(0, (const uint8_t *)key_event->code,
+-      strnlen(key_event->code, sizeof(key_event->code)));
++   /* Browsers normally provide KeyboardEvent.code. Synthetic events and
++    * some TV browser engines may provide only KeyboardEvent.key. */
++   {
++      const char *key_label = key_event->code[0]
++         ? key_event->code : key_event->key;
++      keycode = encoding_crc32(0, (const uint8_t *)key_label,
++         strnlen(key_label, sizeof(key_event->code)));
++   }
+    translated_keycode = input_keymaps_translate_keysym_to_rk(keycode);
+ 
++   /* Tizen's TV browser may expose a non-empty but unusable `code`
++    * (commonly "Unidentified") for Bluetooth Return keys. Retry with
++    * KeyboardEvent.key, then use the legacy numeric code as a final fallback. */
++   if (translated_keycode == RETROK_UNKNOWN && key_event->key[0])
++   {
++      keycode = encoding_crc32(0, (const uint8_t *)key_event->key,
++         strnlen(key_event->key, sizeof(key_event->key)));
++      translated_keycode = input_keymaps_translate_keysym_to_rk(keycode);
++   }
++   if (translated_keycode == RETROK_UNKNOWN &&
++       (key_event->keyCode == 13 || key_event->which == 13))
++      translated_keycode = RETROK_RETURN;
++
++   /* The compact Apple keyboard can be reported as NumpadEnter by Tizen. */
++   if (translated_keycode == RETROK_KP_ENTER)
++      translated_keycode = RETROK_RETURN;
++
+    if (     translated_keycode == RETROK_BACKSPACE)
+       character = '\b';
+    else if (translated_keycode == RETROK_RETURN ||
+@@ -885,6 +1083,8 @@ static void rwebinput_input_poll(void *data)
+    size_t i;
+    rwebinput_input_t *rwebinput      = (rwebinput_input_t*)data;
+ 
++   rwebinput_gamepad_poll(rwebinput);
++
+    for (i = 0; i < rwebinput->keyboard.count; i++)
+       rwebinput_process_keyboard_events(rwebinput,
+          &rwebinput->keyboard.events[i]);

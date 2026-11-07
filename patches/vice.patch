@@ -1,0 +1,36 @@
+diff --git a/libretro/libretro-mapper.c b/libretro/libretro-mapper.c
+index 89f1833..f9a467b 100644
+--- a/libretro/libretro-mapper.c
++++ b/libretro/libretro-mapper.c
+@@ -472,6 +472,18 @@ void process_key(uint8_t disable_keys)
+ void retro_keyboard_event(bool down, unsigned code,
+       uint32_t character, uint16_t mod)
+ {
++   /* Some web runtimes report Shift reliably in the modifier mask even when
++    * the standalone Shift key event is missing or normalised. Keep an
++    * aggregate Shift state so shifted C64 symbols work with Bluetooth
++    * keyboards on Tizen. */
++   if (code == RETROK_LSHIFT || code == RETROK_RSHIFT)
++   {
++      retro_key_event_state[RETROK_LSHIFT] = down;
++      retro_key_event_state[RETROK_RSHIFT] = down;
++      return;
++   }
++   retro_key_event_state[RETROK_LSHIFT] = (mod & RETROKMOD_SHIFT) != 0;
++
+    switch (code)
+    {
+       case RETROK_UNKNOWN:
+@@ -481,6 +493,12 @@ void retro_keyboard_event(bool down, unsigned code,
+    retro_key_event_state[code] = down;
+ }
+ 
++/* Tizen fallback: inject C64 RETURN directly into the core keyboard state. */
++void c64_inject_return(int down)
++{
++   retro_key_event_state[RETROK_RETURN] = down != 0;
++}
++
+ void update_input(uint8_t disable_keys)
+ {
+    /* RETRO  B  Y  SL ST UP DN LT RT A  X  L   R   L2  R2  L3  R3  LR  LL  LD  LU  RR  RL  RD  RU

@@ -1,0 +1,23 @@
+diff --git a/src/drivers/libretro/libretro.c b/src/drivers/libretro/libretro.c
+index 3485976..1694993 100644
+--- a/src/drivers/libretro/libretro.c
++++ b/src/drivers/libretro/libretro.c
+@@ -2984,6 +2984,18 @@ static void FCEUD_UpdateInput(void)
+             }
+          }
+ 
++         /* Web/TV fallback: some Emscripten frontends expose keyboard state
++          * reliably but fail to propagate the RetroPad Select binding.  Keep
++          * normal RetroPad input above, and additionally map the dedicated
++          * keyboard controls straight to the NES controller for player one. */
++         if (player == 0)
++         {
++            if (input_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_s))
++               input_buf |= JOY_SELECT;
++            if (input_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_RETURN))
++               input_buf |= JOY_START;
++         }
++
+          /* Turbo A and Turbo B buttons are
+           * mapped to Joypad X and Joypad Y
+           * in RetroArch joypad.

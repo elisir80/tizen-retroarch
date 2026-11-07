@@ -1,0 +1,74 @@
+# Project type [web_app, test_runner]
+project_type: web_app
+
+# Default profile, Tizen API version
+profile: tv-samsung
+api_version: "5.5"
+
+# Build type [Debug/ Release/ Test]
+build_type: Debug
+
+# Output name for application
+output_name: tizen
+
+# Output path for build
+output_path: ""
+
+# Enable size optimization for the web workspace
+opt: false
+
+# Signing profile to be used for Tizen package signing
+signing_profile: ""
+
+# list of certs in web project (.trust-anchor)
+trust_anchor: []
+
+# Files and resources in the web project
+files:
+  - README.md
+  - index.html
+  - main.js
+  - joypad-input.js
+  - style.css
+  - icon.png
+  - config.xml
+  - wasm/fceumm_libretro.js
+  - wasm/fceumm_libretro.wasm
+  - wasm/snes9x2010_libretro.js
+  - wasm/snes9x2010_libretro.wasm
+  - wasm/vice_x64_libretro.js
+  - wasm/vice_x64_libretro.wasm
+  - wasm/worklet/fceumm_libretro.js
+  - wasm/worklet/fceumm_libretro.wasm
+  - wasm/worklet/snes9x2010_libretro.js
+  - wasm/worklet/snes9x2010_libretro.wasm
+  - wasm/worklet/vice_x64_libretro.js
+  - wasm/worklet/vice_x64_libretro.wasm
+  - wasm/worklet/vice_x64_fast_libretro.js
+  - wasm/worklet/vice_x64_fast_libretro.wasm
+  - wasm/worklet/snes9x2005_libretro.js
+  - wasm/worklet/snes9x2005_libretro.wasm
+  - wasm/worklet/snes9x2005_plus_libretro.js
+  - wasm/worklet/snes9x2005_plus_libretro.wasm
+
+# Exclude build and generated directories from the project
+excludes:
+  - Build/*
+  - build/*
+  - Debug/*
+  - Release/*
+  - Test/*
+  - .buildResult/*
+  - .emsdk/*
+  - .emsdk-worklet/*
+  - .package/*
+  - .sign/*
+  - .wgt
+  - .trash-build/*
+  - __pycache__/*
+  - tools/*
+  - vendor/*
+  - tizen_web_project.yaml
+
+# project dependencies
+deps: []

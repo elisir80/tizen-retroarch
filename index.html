@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RetroArch</title>
+  <link rel="stylesheet" href="style.css?v=systems1">
+</head>
+<body>
+  <main id="app">
+    <header><span class="brand">RETROARCH</span><span class="status">TIZEN TV</span></header>
+    <section class="hero">
+      <p class="eyebrow">WELCOME</p>
+      <h1>Il tuo salotto<br><span>retro-gaming.</span></h1>
+      <p class="hint">Nintendo NES · Super Nintendo · Commodore 64</p>
+    </section>
+    <nav id="menu" aria-label="Menu principale">
+      <button class="selected" data-action="local">ROM locale</button>
+      <button data-action="network">ROM di rete</button>
+      <button data-action="c64-basic">C64 BASIC</button>
+      <button data-action="history">Cronologia</button>
+      <button data-action="settings">Impostazioni</button>
+      <button data-action="exit">Esci</button>
+    </nav>
+    <footer><span>Frecce Movimento</span><span>S Select</span><span>INVIO Start</span><span>BACK Menu gioco</span></footer>
+    <div id="message" role="status"></div>
+    <input id="rom-picker" type="file" accept=".nes,.unf,.unif,.smc,.sfc,.fig,.swc,.d64,.d71,.d81,.g64,.t64,.tap,.prg,.p00,.crt,.x64" hidden>
+    <canvas id="canvas" width="256" height="240" tabindex="0" hidden></canvas>
+    <section id="game-controls" class="game-menu" hidden aria-label="Menu gioco">
+      <p class="eyebrow">MENU GIOCO</p>
+      <h2>Partita in corso</h2>
+      <button id="resume-button">RIPRENDI</button>
+      <button id="fullscreen-button">SCHERMO INTERO</button>
+      <button id="c64-keyboard-button" hidden>TASTIERA C64</button>
+      <button id="c64-joyport-button" hidden>CAMBIA PORTA JOYSTICK</button>
+      <button id="c64-save-session-button" hidden>SALVA SESSIONE BASIC</button>
+      <button id="c64-load-session-button" hidden>RIPRENDI SESSIONE BASIC</button>
+      <button id="exit-game-button">ESCI DAL GIOCO</button>
+      <p class="panel-help">Usa le frecce e premi OK per confermare.</p>
+    </section>
+    <section id="network-panel" class="panel" hidden aria-label="ROM di rete">
+      <div class="panel-heading">
+        <div><p class="eyebrow">RETE LOCALE</p><h2>ROM disponibili</h2></div>
+        <button data-panel-action="close">INDIETRO</button>
+      </div>
+      <p id="network-status" class="panel-status"></p>
+      <div id="network-roms" class="rom-list"></div>
+    </section>
+    <section id="settings-panel" class="panel" hidden aria-label="Impostazioni server ROM">
+      <div class="panel-heading">
+        <div><p class="eyebrow">CONNESSIONE</p><h2>Server ROM</h2></div>
+        <button data-panel-action="close">INDIETRO</button>
+      </div>
+      <h3>Configurazione joypad</h3>
+      <p id="gamepad-mapping-status" class="panel-help">Premi un pulsante per iniziare la configurazione.</p>
+      <p id="gamepad-input-status" class="panel-help" role="status">Premi un pulsante: qui apparirà il segnale ricevuto.</p>
+      <button id="gamepad-map-start-button">IMPOSTA START</button>
+      <button id="gamepad-map-select-button">IMPOSTA SELECT</button>
+      <button id="gamepad-reset-map-button">RIPRISTINA MAPPATURA JOYPAD</button>
+      <label for="server-url">Indirizzo del computer</label>
+      <input id="server-url" type="url" inputmode="url" placeholder="http://IP_DEL_COMPUTER:8766" autocomplete="off">
+      <p class="panel-help">Computer e TV devono essere collegati alla stessa rete.</p>
+      <button id="save-server">SALVA E VERIFICA</button>
+      <p id="settings-status" class="panel-status"></p>
+      <h3>Super Nintendo</h3>
+      <button id="snes-profile-button" aria-describedby="snes-profile-help">SNES: FLUIDITÀ</button>
+      <p id="snes-profile-help" class="panel-help"></p>
+      <p class="panel-help">Scelta salvata automaticamente per il prossimo avvio SNES. Su browser senza SIMD/AudioWorklet viene usato Snes9x 2010.</p>
+      <h3>Commodore 64</h3>
+      <button id="c64-profile-button" aria-describedby="c64-profile-help">C64: FLUIDITÀ</button>
+      <p id="c64-profile-help" class="panel-help"></p>
+      <p class="panel-help">Scelta salvata automaticamente per il prossimo avvio C64. Usa Compatibilità solo se un disco non si avvia con gli altri profili.</p>
+    </section>
+  </main>
+    <script src="joypad-input.js?v=0.3.30"></script>
+    <script src="main.js?v=0.3.30"></script>
+    <style>#canvas{position:fixed;right:8vw;top:18vh;width:min(48vw,768px);height:auto;image-rendering:pixelated;background:#000;border:2px solid #ad8cff;box-shadow:0 0 30px #ad8cff55}</style>
+</body>
+</html>
